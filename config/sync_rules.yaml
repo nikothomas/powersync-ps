@@ -1,0 +1,47 @@
+# Define sync rules to control which data is synced to each user
+# See the docs: https://docs.powersync.com/usage/sync-rules
+bucket_definitions:
+  global:
+    data:
+      # Sync active locations
+      - SELECT * FROM public.sample_locations WHERE is_enabled = TRUE
+      - SELECT * FROM public.license_keys
+      - SELECT * FROM public.user_profiles
+      - SELECT * FROM public.organizations
+      - SELECT * FROM public.user_roles
+      - SELECT * FROM public.role_permissions
+      - SELECT * FROM public.pr2_krakenuniq_taxdb
+      - SELECT id, narrative FROM public.external_database_scar_locations
+      - SELECT id, penguin_count, day, month, year FROM public.external_database_penguin_data
+  owned_org_lists:
+    parameters: |
+      SELECT request.jwt() ->> 'user_org' as org_id
+    data:
+      - SELECT * FROM file_nodes WHERE org_id = bucket.org_id
+      - SELECT * FROM processed_data WHERE org_id = bucket.org_id
+      - SELECT * FROM sample_group_metadata WHERE org_id = bucket.org_id
+      - SELECT * FROM organization_settings WHERE org_id = bucket.org_id
+  processed_data:
+    parameters: |
+      SELECT request.jwt() ->> 'user_org' as org_id
+    data:
+      - SELECT * FROM processed_data_improved WHERE org_id = bucket.org_id
+      - SELECT * FROM processed_ctd_rbr_data_values WHERE org_id = bucket.org_id
+      - SELECT * FROM processed_nutrient_ammonia_data WHERE org_id = bucket.org_id
+      - SELECT * FROM processed_kraken_uniq_report WHERE org_id = bucket.org_id
+      - SELECT * FROM processed_kraken_uniq_stdout WHERE org_id = bucket.org_id
+
+  raw_data:
+    parameters: |
+      SELECT request.jwt() ->> 'user_org' as org_id
+    data:
+      - SELECT * FROM raw_data_improved WHERE org_id = bucket.org_id
+      - SELECT * FROM raw_ctd_rbr_data_values WHERE org_id = bucket.org_id
+      - SELECT * FROM raw_nutrient_ammonia_data WHERE org_id = bucket.org_id
+      - SELECT * FROM raw_fastq_data WHERE org_id = bucket.org_id
+
+  owned_user_lists:
+    parameters: |
+      SELECT request.user_id() as user_id
+    data:
+      - SELECT * FROM user_settings WHERE user_settings.user_id = bucket.user_id

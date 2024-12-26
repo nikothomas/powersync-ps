@@ -1,0 +1,81 @@
+# yaml-language-server: $schema=../schema/schema.json
+# Note that this example uses YAML custom tags for environment variable substitution.
+# Using `!env [variable name]` will substitute the value of the environment variable named
+# [variable name].
+
+# migrations:
+#   # Migrations run automatically by default.
+#   # Setting this to true will skip automatic migrations.
+#   # Migrations can be triggered externally by altering the container `command`.
+#   disable_auto_migration: true
+
+# Settings for telemetry reporting
+# See https://docs.powersync.com/self-hosting/telemetry
+telemetry:
+  # Opt out of reporting anonymized usage metrics to PowerSync telemetry service
+  disable_telemetry_sharing: false
+
+# Settings for source database replication
+replication:
+  # Specify database connection details
+  # Note only 1 connection is currently supported
+  # Multiple connection support is on the roadmap
+  connections:
+    - type: postgresql
+      hostname: pg-db # From the Docker Compose service name
+      port: 5432
+      database: postgres
+      username: postgres
+      password: ${PS_SUPABASE_PASSWORD}
+      sslmode: verify-full # 'verify-full' (default) or 'verify-ca' or 'disable'
+      # 'disable' is OK for local/private networks, not for public networks
+
+      # Required for verify-ca, optional for verify-full
+      # This should be the certificate(s) content in PEM format
+      # cacert: !env PS_PG_CA_CERT
+
+      # Include a certificate here for HTTPs
+      # This should be the certificate content in PEM format
+      # client_certificate: !env PS_PG_CLIENT_CERT
+      # This should be the key content in PEM format
+      # client_private_key: !env PS_PG_CLIENT_PRIVATE_KEY
+
+# This is valid if using the `mongo` service defined in `ps-mongo.yaml`
+
+# Connection settings for sync bucket storage
+storage:
+  type: mongodb
+  uri: mongodb://mongo:27017
+  # Use these if authentication is required. The user should have `readWrite` and `dbAdmin` roles
+  # username: my-mongo-user
+  # password: my-password
+
+# The port which the PowerSync API server will listen on
+port: 8080
+
+# Specify sync rules
+sync_rules:
+  path: /home/config/sync_rules.yaml
+
+# Client (application end user) authentication settings
+client_auth:
+  # Enable this if using Supabase Auth
+  supabase: true
+  supabase_jwt_secret: ${PS_JWT_SECRET}
+
+  # Optional static collection of public keys for JWT verification
+  # jwks:
+  #   keys:
+  #     - kty: 'RSA'
+  #       n: !env PS_JWK_N
+  #       e: !env PS_JWK_E
+  #       alg: 'RS256'
+  #       kid: !env PS_JWK_KID
+
+  # JWKS audience
+  audience: ["powersync-dev", "powersync"]
+
+api:
+  tokens:
+    # These tokens are used for local admin API route authentication
+    - eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2aWt3a25ueGN1dWhpd3VuZ3FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg0NTQ0MDMsImV4cCI6MjA0NDAzMDQwM30._qVQAlYoL5jtSVCAKIznQ_5pI73Ke08YzZnoy_50Npg

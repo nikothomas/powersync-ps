@@ -1,0 +1,49 @@
+services:
+  mongo:
+    image: mongo:7.0
+    command: --replSet rs0 --bind_ip_all --quiet
+    restart: unless-stopped
+    ports:
+      - 27017:27017
+    volumes:
+      - mongo_storage:/data/db
+
+  # Initializes the MongoDB replica set. This service will not usually be actively running
+  mongo-rs-init:
+    image: mongo:7.0
+    depends_on:
+      - mongo
+    restart: on-failure
+    entrypoint:
+      - bash
+      - -c
+      - 'mongosh --host mongo:27017 --eval ''try{rs.status().ok && quit(0)} catch {} rs.initiate({_id: "rs0", version: 1, members: [{ _id: 0, host : "mongo:27017" }]})'''
+
+  # PowerSync service
+  powersync:
+    image: journeyapps/powersync-service:latest
+    container_name: powersync
+    depends_on:
+      - mongo-rs-init
+    command: [ "start", "-r", "unified"]
+    restart: unless-stopped
+    environment:
+      - NODE_OPTIONS="--max-old-space-size=1000"
+      - POWERSYNC_CONFIG_PATH=/home/config/powersync.yaml
+      - PS_DATABASE_TYPE=${PS_DEMO_BACKEND_DATABASE_TYPE:-postgresql}
+      - PS_DATABASE_URI=${PS_DATABASE_URI:-postgresql://postgres:postgres@localhost:5432/postgres}
+      - PS_PORT=${PS_PORT:-8080}
+      - PS_MONGO_URI=${PS_MONGO_URI:-mongodb://mongo:27017}
+      - PS_SUPABASE_AUTH=${USE_SUPABASE_AUTH:-false}
+      - PS_JWKS_URL=${PS_JWKS_URL:-http://localhost:6060/api/auth/keys}
+    ports:
+      - ${PS_PORT}:${PS_PORT}
+    volumes:
+      - ./volumes/config:/home/config
+      - type: bind
+        source: ./volumes/config/sync_rules.yaml
+        target: /home/config/sync_rules.yaml
+
+      - type: bind
+        source: ./volumes/config/powersync.yaml
+        target: /home/config/powersync.yaml

@@ -40,9 +40,9 @@ services:
       - ${PS_PORT}:${PS_PORT}
     volumes:
       - type: bind
-        source: ./volumes/config/powersync.yaml
+        source: ./config/powersync.yaml
         target: /home/config/powersync.yaml
 
       - type: bind
-        source: ./volumes/config/sync_rules.yaml
+        source: ./config/sync_rules.yaml
         target: /home/config/sync_rules.yaml

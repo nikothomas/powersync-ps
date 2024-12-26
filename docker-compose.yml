@@ -25,10 +25,10 @@ services:
     container_name: powersync
     depends_on:
       - mongo-rs-init
-    command: [ "start", "-r", "unified"]
+    command: [ "start", "-r", "unified" ]
     restart: unless-stopped
     environment:
-      - NODE_OPTIONS="--max-old-space-size=1000"
+      - NODE_OPTIONS=--max-old-space-size=1000
       - POWERSYNC_CONFIG_PATH=/home/config/powersync.yaml
       - PS_DATABASE_TYPE=${PS_DEMO_BACKEND_DATABASE_TYPE:-postgresql}
       - PS_DATABASE_URI=${PS_DATABASE_URI:-postgresql://postgres:postgres@localhost:5432/postgres}
@@ -37,12 +37,10 @@ services:
       - PS_SUPABASE_AUTH=${USE_SUPABASE_AUTH:-false}
       - PS_JWKS_URL=${PS_JWKS_URL:-http://localhost:6060/api/auth/keys}
     ports:
-      - ${PS_PORT}:${PS_PORT}
+      - "${PS_PORT}:${PS_PORT}"
     volumes:
-      - type: bind
-        source: ./config/powersync.yaml
-        target: /home/config/powersync.yaml
+      - ./config/powersync.yaml:/home/config/powersync.yaml
+      - ./config/sync_rules.yaml:/home/config/sync_rules.yaml
 
-      - type: bind
-        source: ./config/sync_rules.yaml
-        target: /home/config/sync_rules.yaml
+volumes:
+  mongo_storage:
